@@ -1,0 +1,31 @@
+{
+    "editionTitle": "ge",
+    "editionSubtitle": "editor",
+    "ignoreNamespace": true,
+    "documents": "",
+    "documentContent": "",
+    "documentTitle": "",
+    "documentAuthor": "",
+    "indexDocument": "",
+    "documentImages": "",
+    "documentNotes": "",
+    "documentLinks": "",
+    "inputs": [
+        "https://firebasestorage.googleapis.com/v0/b/ge-editor.appspot.com/o/xml%2Fms_fr_00225_f001v_002_left.xml?alt=media&token=e27506bd-7c44-4737-8ce6-2a29441cee0b"
+    ],
+    "curation": {
+        "markup": [
+            {
+                "xpath": "//TEI",
+                "label": "TEI"
+            },
+            {
+                "xpath": "//seg",
+                "label": "seg"
+            }
+        ],
+        "toc": [
+            "ee12a7fe5e1c75768c6ddc19ce9fde3db0d1c5c359dbeb229e6233bfd77eb480"
+        ]
+    }
+}
