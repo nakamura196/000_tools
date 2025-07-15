@@ -26,6 +26,10 @@
             {
                 "xpath": "//lg",
                 "label": "line groups"
+            },
+            {
+                "xpath": "//placeName",
+                "label": "place"
             }
         ],
         "toc": [
