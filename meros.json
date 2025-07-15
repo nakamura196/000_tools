@@ -1,0 +1,45 @@
+{
+    "editionTitle": "走れメロス",
+    "editionSubtitle": "TEI",
+    "ignoreNamespace": true,
+    "documents": "//p",
+    "documentContent": "",
+    "documentTitle": "",
+    "documentAuthor": "",
+    "indexDocument": "",
+    "documentImages": "",
+    "documentNotes": "",
+    "documentLinks": "",
+    "inputs": [
+        "https://candra.dhii.jp/nagasaki/tei/tei_viewer_custom/meros.xml"
+    ],
+    "curation": {
+        "markup": [
+            {
+                "xpath": "//persName",
+                "label": "people"
+            }
+        ],
+        "toc": [
+            "63c4ccec9c909bfe1a7bd03ef7a5c926d9c317858fdb34e88a14f70a5c34146e",
+            "6e782ac086d378327a98d1f5ef337a20274d425277d21852bced686967a4fa80",
+            "781ee01b6edc7b48c9adc5b42453dc3bc017de67b1f58b86906c76be26c17201",
+            "024db81ca5da9bc1ac2a98691524fb19255b57033999eb8a0f664ee0b7e4a5cc",
+            "47db9882ac8a69261a45e010c7b2c2ab9df93a29e548a45e19566e4c7eafc7b5",
+            "e436b8cc77671d475869140176f7187d93531f7e4a5646681bcdb0c8d38603dd",
+            "4b507c3b17f0d79e6d04bdd055a2d207b551fa677ad5b8e320edc81b6c4059cf",
+            "fb1ef9e78a800fff78f8c84cf1bff8926b14e78391949466d7e7d88a365c733d",
+            "28b2e1102ea0a6224a09c9b0865ce5be2a595608bc91bff97389b33714b59c68",
+            "2d7dae2789b2dac3df2744b5978bc93bcc97fe5a86569fe357d3b8256063bcc0",
+            "5e0eb6f7090a9901e409f588c9756249fc9c6ab92ee941554f0724029c0df34c",
+            "48693c4ba55eeaf8a6fa0a6ddb529a8e82072ca409eab692881748158e4527e8",
+            "a4e0783e21212076ce9feb979d10c55dd01a5555c7157207d885555e5c9adb56",
+            "170f0b5828c65f6c5d6fa1b3805e345695052ad10159c63c99bc5d3cd27cde60",
+            "acbe5b6c2b8ea29f2861f5ee7ab58d49a2f6e137824925815f322fa789733af9",
+            "2eb420246fc60037c3b1be95213cb0c881fc932dd803684d69e4b1d91dedd229",
+            "22ddfdd6b4502f69960bdcca9263962171c008d0026d701340a94285f315136c",
+            "1dcf7fa9e19b3cfb7224ea1230a0a4c60c01e577bd29305d0d1975991b101911",
+            "0d1c8c1101919e9d19b37f12df17192f620cb44d1a7169a587ff94d00b14fa75"
+        ]
+    }
+}
