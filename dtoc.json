@@ -6,12 +6,13 @@
     "documentContent": "",
     "documentTitle": "head",
     "documentAuthor": "",
-    "indexDocument": "",
+    "indexDocument": "//div[@type='index']",
     "documentImages": "",
     "documentNotes": "",
     "documentLinks": "",
     "inputs": [
-        "https://raw.githubusercontent.com/LEAF-VRE/dh2025_workshop/refs/heads/main/DToC_files/demo/Inferno_english_entities.xml"
+        "https://raw.githubusercontent.com/LEAF-VRE/dh2025_workshop/refs/heads/main/DToC_files/demo/Inferno_english_entities.xml",
+        "https://raw.githubusercontent.com/LEAF-VRE/dh2025_workshop/refs/heads/main/DToC_files/demo/demo_index.xml"
     ],
     "curation": {
         "markup": [
@@ -22,14 +23,6 @@
             {
                 "xpath": "//persName",
                 "label": "people"
-            },
-            {
-                "xpath": "//lg",
-                "label": "line groups"
-            },
-            {
-                "xpath": "//placeName",
-                "label": "place"
             }
         ],
         "toc": [
