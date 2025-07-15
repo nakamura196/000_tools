@@ -1,0 +1,35 @@
+{
+    "editionTitle": "My First DToC",
+    "editionSubtitle": "DH2025",
+    "ignoreNamespace": true,
+    "documents": "//div[@type='canto']",
+    "documentContent": "",
+    "documentTitle": "head",
+    "documentAuthor": "",
+    "indexDocument": "",
+    "documentImages": "",
+    "documentNotes": "",
+    "documentLinks": "",
+    "inputs": [
+        "https://raw.githubusercontent.com/LEAF-VRE/dh2025_workshop/refs/heads/main/DToC_files/demo/Inferno_english_entities.xml"
+    ],
+    "curation": {
+        "markup": [
+            {
+                "xpath": "//div",
+                "label": "div"
+            },
+            {
+                "xpath": "//persName",
+                "label": "people"
+            },
+            {
+                "xpath": "//lg",
+                "label": "line groups"
+            }
+        ],
+        "toc": [
+            "4a234af798927871188f603d6a25ed5367ebdce32593fe6970e496280443fca5"
+        ]
+    }
+}
