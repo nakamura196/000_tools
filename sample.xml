@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xml:id="project-authority-file">
+    <teiHeader>
+        <fileDesc>
+            <titleStmt>
+                <title>Project-Specific Authority File for LEAF-Writer</title>
+                <author>Project Team</author>
+                <respStmt>
+                    <resp>Authority file creation and maintenance</resp>
+                    <name>Your Name</name>
+                </respStmt>
+            </titleStmt>
+            <publicationStmt>
+                <publisher>Your Institution</publisher>
+                <date when="2025-07-15">July 15, 2025</date>
+                <availability>
+                    <licence target="https://creativecommons.org/licenses/by/4.0/">
+            This work is licensed under a Creative Commons Attribution 4.0 International License.
+                    </licence>
+                </availability>
+            </publicationStmt>
+            <sourceDesc>
+                <p>Born digital authority file for project-specific entities</p>
+            </sourceDesc>
+        </fileDesc>
+        <profileDesc>
+            <particDesc>
+                <!-- List of people can be placed here in teiHeader -->
+                <listPerson>
+                    <person xml:id="person-sample001">
+                        <persName>Sample Person One</persName>
+                        <birth when="1850">1850</birth>
+                        <death when="1920">1920</death>
+                        <occupation>Writer</occupation>
+                    </person>
+                </listPerson>
+            </particDesc>
+            <settingDesc>
+                <!-- List of places can be placed here in teiHeader -->
+                <listPlace>
+                    <place xml:id="place-sample001">
+                        <placeName>Sample City</placeName>
+                        <location>
+                            <country>Japan</country>
+                            <region>Kansai</region>
+                        </location>
+                    </place>
+                </listPlace>
+            </settingDesc>
+        </profileDesc>
+    </teiHeader>
+
+    <text>
+        <body>
+            <!-- Additional entity lists can be placed in body -->
+            <div type="authority-lists">
+
+                <!-- People -->
+                <listPerson>
+                    <head>Project Personnel</head>
+                    <person xml:id="person-ABC123">
+                        <persName>Display Name</persName>
+                        <persName type="full">Full Display Name</persName>
+                        <persName xml:lang="ja">日本語名</persName>
+                        <birth when="1800">1800</birth>
+                        <death when="1880">1880</death>
+                        <occupation>Scholar</occupation>
+                        <note>Additional biographical information can be included here.</note>
+                    </person>
+
+                    <person xml:id="person-DEF456">
+                        <persName>Another Person</persName>
+                        <persName type="variant">Alternative Name</persName>
+                        <floruit notBefore="1850" notAfter="1900">mid-19th century</floruit>
+                        <occupation>Artist</occupation>
+                    </person>
+                </listPerson>
+
+                <!-- Places -->
+                <listPlace>
+                    <head>Project Locations</head>
+                    <place xml:id="place-BCD234">
+                        <placeName>Display Name</placeName>
+                        <placeName type="variant">Alternative Place Name</placeName>
+                        <placeName xml:lang="ja">日本語地名</placeName>
+                        <location>
+                            <geo>35.6762 139.6503</geo>
+                            <country>Japan</country>
+                            <settlement>Tokyo</settlement>
+                        </location>
+                        <note>Historical or contextual information about the place.</note>
+                    </place>
+
+                    <place xml:id="place-EFG789">
+                        <placeName>Historical Location</placeName>
+                        <location>
+                            <country>United Kingdom</country>
+                            <settlement>London</settlement>
+                        </location>
+                    </place>
+                </listPlace>
+
+                <!-- Organizations -->
+                <listOrg>
+                    <head>Project Organizations</head>
+                    <org xml:id="org-CDE345">
+                        <orgName>Display Name</orgName>
+                        <orgName type="full">Full Organization Name</orgName>
+                        <orgName xml:lang="ja">組織名</orgName>
+                        <desc>Description of the organization's role or purpose.</desc>
+                        <note>Additional information about the organization.</note>
+                    </org>
+
+                    <org xml:id="org-HIJ012">
+                        <orgName>Academic Institution</orgName>
+                        <orgName type="abbr">AI</orgName>
+                        <desc>Educational institution involved in the project.</desc>
+                    </org>
+                </listOrg>
+
+                <!-- Works and Manuscripts -->
+                <listBibl>
+                    <head>Project Works and Manuscripts</head>
+
+                    <!-- Work/Title example -->
+                    <bibl xml:id="work-EFG567">
+                        <title>Display Title</title>
+                        <title type="short">Short Title</title>
+                        <title xml:lang="ja">日本語タイトル</title>
+                        <author ref="#person-ABC123">Display Name</author>
+                        <date when="1875">1875</date>
+                        <publisher>Sample Publisher</publisher>
+                        <note>Additional bibliographic information.</note>
+                    </bibl>
+
+                    <bibl xml:id="work-KLM890">
+                        <title>Another Work Title</title>
+                        <author>Anonymous</author>
+                        <date notBefore="1800" notAfter="1850">early 19th century</date>
+                    </bibl>
+
+                    <!-- Manuscript Description example -->
+                    <msDesc xml:id="ms-FGH678">
+                        <msIdentifier>
+                            <msName>Display Name</msName>
+                            <institution>Holding Institution</institution>
+                            <repository>Library Name</repository>
+                            <idno>MS 123</idno>
+                        </msIdentifier>
+                        <msContents>
+                            <summary>Brief description of manuscript contents</summary>
+                        </msContents>
+                        <physDesc>
+                            <objectDesc>
+                                <supportDesc>
+                                    <extent>100 folios</extent>
+                                </supportDesc>
+                            </objectDesc>
+                        </physDesc>
+                        <history>
+                            <origin>
+                                <origDate notBefore="1600" notAfter="1700">17th century</origDate>
+                                <origPlace ref="#place-BCD234">Display Name</origPlace>
+                            </origin>
+                        </history>
+                    </msDesc>
+
+                    <msDesc xml:id="ms-NOP234">
+                        <msIdentifier>
+                            <msName>Another Manuscript</msName>
+                            <idno>MS 456</idno>
+                        </msIdentifier>
+                        <msContents>
+                            <summary>Description of another manuscript</summary>
+                        </msContents>
+                    </msDesc>
+                </listBibl>
+
+            </div>
+        </body>
+
+        <back>
+            <!-- Additional lists can also be placed in back matter -->
+            <div type="appendices">
+                <listPerson>
+                    <head>Additional Personnel</head>
+                    <person xml:id="person-QRS345">
+                        <persName>Back Matter Person</persName>
+                        <note>Person listed in back matter section.</note>
+                    </person>
+                </listPerson>
+            </div>
+        </back>
+    </text>
+</TEI>
