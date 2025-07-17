@@ -59,9 +59,10 @@
                 <listPerson>
                     <head>Project Personnel</head>
                     <person xml:id="person-ABC123">
-                        <persName>Display Name</persName>
+                        <persName>あいう</persName>
                         <persName type="full">Full Display Name</persName>
                         <persName xml:lang="ja">日本語名</persName>
+                        <persName>紫式部</persName>
                         <birth when="1800">1800</birth>
                         <death when="1880">1880</death>
                         <occupation>Scholar</occupation>
