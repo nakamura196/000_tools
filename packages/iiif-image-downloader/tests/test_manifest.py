@@ -116,6 +116,87 @@ class TestParseV3:
         assert image.service is not None
 
 
+class TestServiceDetection:
+    def test_context_beats_bare_level_profile(self, manifest_v2):
+        # An Image API 2 service written with the abbreviated 3.0-style profile
+        # must still be treated as v2, or every request asks for /full/max/.
+        resource = manifest_v2["sequences"][0]["canvases"][0]["images"][0]["resource"]
+        resource["service"] = {
+            "@context": "http://iiif.io/api/image/2/context.json",
+            "@id": "https://example.org/iiif/12345_1",
+            "profile": "level2",
+        }
+        image = parse_manifest(manifest_v2).images[0]
+        assert image.service.version == 2
+
+    def test_profile_as_list_is_understood(self, manifest_v2):
+        # Conformant Image API 2.x info.json: profile is a list whose first
+        # entry is the compliance level URI.
+        resource = manifest_v2["sequences"][0]["canvases"][0]["images"][0]["resource"]
+        resource["service"] = {
+            "@id": "https://example.org/iiif/12345_1",
+            "profile": [
+                "http://iiif.io/api/image/2/level2.json",
+                {"formats": ["jpg"], "supports": ["sizeByW"]},
+            ],
+        }
+        image = parse_manifest(manifest_v2).images[0]
+        assert image.service.version == 2
+
+    def test_image_service_wins_over_other_services(self, manifest_v2):
+        resource = manifest_v2["sequences"][0]["canvases"][0]["images"][0]["resource"]
+        resource["service"] = [
+            {"@id": "https://example.org/auth/login"},
+            {
+                "@id": "https://example.org/iiif/12345_1",
+                "profile": "http://iiif.io/api/image/2/level2.json",
+            },
+        ]
+        image = parse_manifest(manifest_v2).images[0]
+        assert image.service.id == "https://example.org/iiif/12345_1"
+
+    def test_sole_untyped_service_is_still_used(self, manifest_v2):
+        resource = manifest_v2["sequences"][0]["canvases"][0]["images"][0]["resource"]
+        resource["service"] = {"@id": "https://example.org/iiif/12345_1"}
+        image = parse_manifest(manifest_v2).images[0]
+        assert image.service.id == "https://example.org/iiif/12345_1"
+        assert image.service.version == 2
+
+
+class TestChoice:
+    def test_v2_choice_prefers_default_over_alternative(self, manifest_v2):
+        # A 2.x Choice puts the image to show in `default` and alternatives
+        # (x-ray, ultraviolet…) in `item`.
+        annotation = manifest_v2["sequences"][0]["canvases"][0]["images"][0]
+        annotation["resource"] = {
+            "@type": "oa:Choice",
+            "default": {"@id": "https://example.org/color.jpg", "format": "image/jpeg"},
+            "item": [{"@id": "https://example.org/xray.jpg", "format": "image/jpeg"}],
+        }
+        image = parse_manifest(manifest_v2).images[0]
+        assert image.image_id == "https://example.org/color.jpg"
+
+    def test_v2_choice_without_default_falls_back_to_item(self, manifest_v2):
+        annotation = manifest_v2["sequences"][0]["canvases"][0]["images"][0]
+        annotation["resource"] = {
+            "@type": "oa:Choice",
+            "item": [{"@id": "https://example.org/only.jpg"}],
+        }
+        image = parse_manifest(manifest_v2).images[0]
+        assert image.image_id == "https://example.org/only.jpg"
+
+
+class TestCanvasNumbering:
+    def test_v3_non_canvas_entry_does_not_shift_numbering(self, manifest_v3):
+        manifest_v3["items"].insert(0, {"id": "https://example.org/x", "type": "Range"})
+        indexes = [image.index for image in parse_manifest(manifest_v3).images]
+        assert indexes == [1, 2, 3]
+
+    def test_v2_unpaintable_canvas_leaves_a_gap(self, manifest_v2):
+        # Canvas 3 has no painting annotation; numbering follows canvas order.
+        assert [image.index for image in parse_manifest(manifest_v2).images] == [0, 1]
+
+
 class TestCollections:
     def test_is_collection(self, collection_v3, manifest_v3):
         assert is_collection(collection_v3)
@@ -135,6 +216,20 @@ class TestCollections:
         uris = collection_manifest_uris(collection_v2)
         assert "https://example.org/api/iiif/12345/manifest.json" in uris
         assert "https://example.org/api/iiif/collection/top" in uris
+
+    def test_v2_members_takes_precedence(self, collection_v2):
+        # Presentation 2.1: a client seeing `members` should use it even when
+        # `manifests` / `collections` are also present.
+        collection_v2["members"] = [
+            {
+                "@id": "https://example.org/api/iiif/99999/manifest.json",
+                "@type": "sc:Manifest",
+                "label": "Ordered member",
+            }
+        ]
+        assert collection_manifest_uris(collection_v2) == [
+            "https://example.org/api/iiif/99999/manifest.json"
+        ]
 
 
 class TestLoadManifests:

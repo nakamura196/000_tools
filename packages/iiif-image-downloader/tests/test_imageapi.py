@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from iiif_image_downloader import CanvasImage, ImageService, image_url, manifest_dirname
@@ -61,15 +63,34 @@ class TestManifestDirname:
     def test_manifest_json_suffix_stripped(self):
         assert manifest_dirname("https://example.org/item/999/manifest") == "example.org_999"
 
+    def test_json_suffix_is_dropped(self):
+        assert (
+            manifest_dirname("https://example.org/iiif/manifest-01.json")
+            == "example.org_manifest-01"
+        )
+        assert manifest_dirname("https://example.org/i/abc-123.jsonld") == "example.org_abc-123"
+
     def test_generic_tail_gets_more_context(self):
         assert manifest_dirname("https://example.org/foo/iiif") == "example.org_foo_iiif"
 
     def test_falls_back_to_label(self):
-        assert manifest_dirname("", label="源氏物語 サンプル") == "untitled"
+        assert manifest_dirname("", label="源氏物語 サンプル") == "源氏物語_サンプル"
 
     def test_result_is_path_safe(self):
         name = manifest_dirname("https://example.org/a b/c%2Fd/manifest.json")
         assert "/" not in name and " " not in name
+
+    def test_percent_encoded_traversal_cannot_escape(self):
+        # Decoding happens before sanitising, so %2e%2e%2f cannot smuggle in a
+        # separator: the result stays a single, harmless directory name.
+        name = manifest_dirname("https://example.org/%2e%2e%2f%2e%2e%2fetc/manifest.json")
+        assert os.sep not in name
+        assert "/" not in name
+        assert name not in (".", "..")
+
+    def test_label_traversal_cannot_escape(self):
+        assert manifest_dirname("", label="../../.ssh") == "ssh"
+        assert manifest_dirname("", label="..") == "untitled"
 
 
 class TestFilenames:
@@ -78,8 +99,15 @@ class TestFilenames:
 
     def test_label_appended_on_request(self):
         name = output_filename(make_image(index=0, label="2丁 表"), extension="jpg", use_label=True)
-        assert name.startswith("00001_")
-        assert name.endswith(".jpg")
+        assert name == "00001_2丁_表.jpg"
+
+    def test_japanese_label_is_preserved(self):
+        name = output_filename(make_image(index=0, label="1丁表"), extension="jpg", use_label=True)
+        assert name == "00001_1丁表.jpg"
+
+    def test_label_with_path_separator_is_flattened(self):
+        name = output_filename(make_image(index=0, label="a/b:c"), extension="jpg", use_label=True)
+        assert name == "00001_a_b_c.jpg"
 
     def test_extension_from_url(self):
         assert guess_extension("https://example.org/a/b.png", make_image()) == "png"

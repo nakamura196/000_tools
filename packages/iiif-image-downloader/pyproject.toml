@@ -20,6 +20,8 @@ classifiers = [
 ]
 dependencies = [
   "requests>=2.26",
+  # Retry(allowed_methods=...) — 1.25.x only has the older method_whitelist.
+  "urllib3>=1.26",
   "tqdm>=4.60",
 ]
 

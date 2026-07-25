@@ -17,9 +17,14 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-from .errors import ManifestFetchError, ManifestParseError, UnsupportedVersionError
+from .errors import (
+    IIIFError,
+    ManifestFetchError,
+    ManifestParseError,
+    UnsupportedVersionError,
+)
 from .models import CanvasImage, ImageService, Manifest
 
 logger = logging.getLogger(__name__)
@@ -90,13 +95,31 @@ def _types(node: Dict[str, Any]) -> List[str]:
     return values
 
 
+def _profile_string(service: Dict[str, Any]) -> str:
+    """Flatten ``profile`` into one string.
+
+    In an Image API 2.x ``info.json`` the profile is a *list* whose first entry
+    is the compliance level URI, followed by objects describing supported
+    features; embedded services often use a bare URI string instead. Image API
+    3.0 uses a bare ``level0``/``level1``/``level2`` string.
+    """
+    return " ".join(
+        p if isinstance(p, str) else _first_str(p) or "" for p in _as_list(service.get("profile"))
+    )
+
+
+def _context_string(service: Dict[str, Any]) -> str:
+    return " ".join(c for c in _as_list(service.get("@context")) if isinstance(c, str))
+
+
 def _image_api_version(service: Dict[str, Any]) -> int:
     """Infer the Image API major version from a service description.
 
-    Order of evidence: the 3.0 ``type`` (``ImageService3``), then the profile
-    URI / compliance level string used by 1.x and 2.x. Unknown services fall
-    back to 2, whose ``full`` size segment is the safest default for older
-    servers.
+    Evidence is weighed strongest first: the 3.0 ``type`` (``ImageService3``),
+    then the ``@context``, then the profile URI used by 1.x and 2.x. Only when
+    none of those are present is a bare ``level*`` profile — the 3.0 spelling —
+    taken as a hint. Unknown services fall back to 2, whose ``full`` size
+    segment is the safest default for older servers.
     """
     for declared in _types(service):
         if declared.startswith("ImageService"):
@@ -104,33 +127,39 @@ def _image_api_version(service: Dict[str, Any]) -> int:
             if suffix.isdigit():
                 return int(suffix)
 
-    profiles = " ".join(
-        p if isinstance(p, str) else _first_str(p) or "" for p in _as_list(service.get("profile"))
-    )
-    if "image/3/" in profiles or profiles.startswith("level"):
-        # 1.x and 2.x always spell the profile as a URI; a bare "level2"
-        # string is the 3.0 form.
+    context = _context_string(service)
+    if "image/3/context.json" in context:
+        return 3
+    if "image/2/context.json" in context:
+        return 2
+    if "image/1/context.json" in context:
+        return 1
+
+    profiles = _profile_string(service)
+    if "image/3/" in profiles:
         return 3
     if "image/2/" in profiles:
         return 2
     if "image/1/" in profiles:
         return 1
-
-    context = " ".join(c for c in _as_list(service.get("@context")) if isinstance(c, str))
-    if "image/3/context.json" in context:
+    if profiles.startswith("level"):
+        # 1.x and 2.x always spell the profile as a URI, so a bare "level2"
+        # is the 3.0 form — but only trust it when nothing stronger said 2.x.
         return 3
-    if "image/2/context.json" in context:
-        return 2
     return 2
 
 
 def _pick_service(node: Dict[str, Any]) -> Optional[ImageService]:
     """Return the Image API service of a painting resource, if any.
 
-    ``service`` may be a dict (2.x) or a list (3.0, and some 2.x manifests).
-    Non-image services (e.g. a search service accidentally attached to the
-    resource) are ignored.
+    ``service`` may be a dict (2.x) or a list (3.0, and some 2.x manifests),
+    and a resource may carry several services — an authentication service next
+    to the image service, for instance. A positively identified Image API
+    service always wins; an untyped, profile-less service is only used when it
+    is the sole candidate.
     """
+    fallback: Optional[Dict[str, Any]] = None
+
     for key in ("service", "services"):
         for candidate in _as_list(node.get(key)):
             if not isinstance(candidate, dict):
@@ -138,24 +167,27 @@ def _pick_service(node: Dict[str, Any]) -> Optional[ImageService]:
             service_id = _resource_id(candidate)
             if not service_id:
                 continue
+
             declared = " ".join(_types(candidate))
-            profiles = " ".join(
-                p if isinstance(p, str) else _first_str(p) or ""
-                for p in _as_list(candidate.get("profile"))
-            )
-            looks_like_image = (
+            profiles = _profile_string(candidate)
+            context = _context_string(candidate)
+
+            if (
                 declared.startswith("ImageService")
                 or "iiif.io/api/image" in profiles
-                or "iiif.io/api/image"
-                in " ".join(c for c in _as_list(candidate.get("@context")) if isinstance(c, str))
-                or (declared == "" and profiles == "")
-            )
-            if not looks_like_image:
-                continue
-            return ImageService(
-                id=service_id.rstrip("/"),
-                version=_image_api_version(candidate),
-            )
+                or "iiif.io/api/image" in context
+                or profiles.startswith("level")
+            ):
+                return ImageService(
+                    id=service_id.rstrip("/"),
+                    version=_image_api_version(candidate),
+                )
+            if not declared and not profiles and fallback is None:
+                fallback = candidate
+
+    if fallback is not None:
+        service_id = _resource_id(fallback) or ""
+        return ImageService(id=service_id.rstrip("/"), version=_image_api_version(fallback))
     return None
 
 
@@ -194,6 +226,31 @@ def is_collection(data: Dict[str, Any]) -> bool:
 # --------------------------------------------------------------------------
 # parsers
 # --------------------------------------------------------------------------
+def _unwrap_v2_choice(resource: Dict[str, Any]) -> Dict[str, Any]:
+    """Resolve a Presentation 2.x ``oa:Choice`` to the resource to download.
+
+    A 2.x Choice puts the resource to show by default in ``default`` and the
+    alternatives (an x-ray or ultraviolet shot of the same page, typically) in
+    ``item``. Taking ``item[0]`` would download the alternative rather than the
+    image the provider chose to present, so ``default`` wins when present.
+    """
+    is_choice = (
+        "Choice" in " ".join(_types(resource))
+        or "default" in resource
+        or ("item" in resource and not _resource_id(resource))
+    )
+    if not is_choice:
+        return resource
+
+    default = resource.get("default")
+    if isinstance(default, dict):
+        return default
+    for item in _as_list(resource.get("item")):
+        if isinstance(item, dict):
+            return item
+    return resource
+
+
 def _parse_v2(data: Dict[str, Any]) -> List[CanvasImage]:
     canvases: List[Any] = []
     for sequence in _as_list(data.get("sequences")):
@@ -216,11 +273,7 @@ def _parse_v2(data: Dict[str, Any]) -> List[CanvasImage]:
             logger.debug("canvas %s has no painting resource; skipped", index)
             continue
 
-        # A Choice wraps the real resources in "item"; take the first.
-        if "item" in resource and not _resource_id(resource):
-            items = [i for i in _as_list(resource.get("item")) if isinstance(i, dict)]
-            if items:
-                resource = items[0]
+        resource = _unwrap_v2_choice(resource)
 
         images.append(
             CanvasImage(
@@ -263,13 +316,16 @@ def _painting_bodies(canvas: Dict[str, Any]) -> Iterable[Dict[str, Any]]:
 
 def _parse_v3(data: Dict[str, Any]) -> List[CanvasImage]:
     images: List[CanvasImage] = []
-    canvases = [
-        c
-        for c in _as_list(data.get("items"))
-        if isinstance(c, dict) and (not _types(c) or "Canvas" in _types(c))
-    ]
 
-    for index, canvas in enumerate(canvases):
+    # Enumerate before filtering, so that a non-Canvas entry does not shift the
+    # numbering of everything after it (the 2.x parser behaves the same way).
+    for index, canvas in enumerate(_as_list(data.get("items"))):
+        if not isinstance(canvas, dict):
+            continue
+        types = _types(canvas)
+        if types and "Canvas" not in types:
+            continue
+
         body = None
         for candidate in _painting_bodies(canvas):
             types = _types(candidate)
@@ -325,12 +381,18 @@ def collection_manifest_uris(data: Dict[str, Any]) -> List[str]:
 
     Nested Collections are returned as-is; :func:`load_manifests` expands them
     recursively.
+
+    Presentation 2.1 added ``members``, which interleaves sub-collections and
+    manifests in a single ordered list, and instructs clients to use it in
+    preference to ``manifests`` / ``collections`` when all are present.
     """
     members: List[Any] = []
-    members.extend(_as_list(data.get("manifests")))  # 2.x
-    members.extend(_as_list(data.get("collections")))  # 2.x
     members.extend(_as_list(data.get("items")))  # 3.0
-    members.extend(_as_list(data.get("members")))  # 2.1 mixed membership
+    if data.get("members"):
+        members.extend(_as_list(data.get("members")))  # 2.1, takes precedence
+    else:
+        members.extend(_as_list(data.get("manifests")))  # 2.x
+        members.extend(_as_list(data.get("collections")))  # 2.x
 
     uris: List[str] = []
     for member in members:
@@ -383,12 +445,19 @@ def load_manifests(
     uris: Sequence[str],
     *,
     max_depth: int = 2,
+    fail_fast: bool = False,
+    errors: Optional[List[Tuple[str, str]]] = None,
     **kwargs: Any,
 ) -> List[Manifest]:
     """Fetch and parse several URIs, expanding Collections along the way.
 
     ``max_depth`` bounds Collection recursion (1 = expand the given Collection
     only). Duplicate URIs are visited once.
+
+    One unreachable or malformed URI does not abort the rest: it is logged,
+    appended to ``errors`` as ``(uri, message)`` when a list is given, and the
+    remaining URIs are still processed. Pass ``fail_fast=True`` to raise on the
+    first failure instead.
     """
     manifests: List[Manifest] = []
     seen = set()
@@ -400,16 +469,39 @@ def load_manifests(
             continue
         seen.add(uri)
 
-        data = fetch_json(uri, **kwargs)
+        try:
+            data = fetch_json(uri, **kwargs)
+        except IIIFError as exc:
+            if fail_fast:
+                raise
+            logger.error("%s", exc)
+            if errors is not None:
+                errors.append((uri, str(exc)))
+            continue
+
         if is_collection(data):
             if depth >= max_depth:
                 logger.warning("collection depth limit reached, not expanding %s", uri)
                 continue
             children = collection_manifest_uris(data)
-            logger.info("collection %s -> %d member(s)", uri, len(children))
+            if children:
+                logger.info("collection %s -> %d member(s)", uri, len(children))
+            else:
+                logger.warning(
+                    "collection %s lists no members "
+                    "(a paged Presentation 2.1 collection is not followed)",
+                    uri,
+                )
             queue.extend((child, depth + 1) for child in children)
             continue
 
-        manifests.append(parse_manifest(data, source_uri=uri))
+        try:
+            manifests.append(parse_manifest(data, source_uri=uri))
+        except IIIFError as exc:
+            if fail_fast:
+                raise
+            logger.error("%s: %s", uri, exc)
+            if errors is not None:
+                errors.append((uri, str(exc)))
 
     return manifests

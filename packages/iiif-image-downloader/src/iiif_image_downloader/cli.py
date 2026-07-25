@@ -135,6 +135,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     except IIIFError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
+    except KeyboardInterrupt:
+        # Interrupting is a documented way to stop a long run; re-running the
+        # same command picks up where it left off, so say so instead of
+        # dumping a traceback.
+        print(
+            "\ninterrupted. Re-run the same command to resume "
+            "(already downloaded files are skipped).",
+            file=sys.stderr,
+        )
+        return 130
 
     if args.dry_run:
         for manifest_report in report.manifests:

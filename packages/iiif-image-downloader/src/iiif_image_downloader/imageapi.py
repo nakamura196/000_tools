@@ -23,7 +23,20 @@ FORMAT_EXTENSIONS = {
 
 KNOWN_EXTENSIONS = set(FORMAT_EXTENSIONS.values()) | {"jpeg", "tiff"}
 
-_UNSAFE = re.compile(r"[^0-9A-Za-z._-]+")
+#: Characters that cannot appear in a path segment on macOS, Linux or Windows,
+#: plus whitespace and control characters. Everything else — including Japanese
+#: — is kept, so labels stay readable in the output folder.
+_UNSAFE = re.compile(r'[\\/:*?"<>|\x00-\x1f\s]+')
+
+#: A leading dot hides the file; these names are reserved on Windows.
+_RESERVED = {
+    "con",
+    "prn",
+    "aux",
+    "nul",
+    *(f"com{i}" for i in range(1, 10)),
+    *(f"lpt{i}" for i in range(1, 10)),
+}
 
 
 def image_url(
@@ -39,8 +52,9 @@ def image_url(
 
     When the resource has a Image API service, a full request URI is assembled
     (``{id}/{region}/{size}/{rotation}/{quality}.{format}``). ``size`` defaults
-    to ``max`` for Image API 3 and ``full`` for 1.x/2.x — the 3.0 spec removed
-    ``full``, while some 2.x servers never implemented ``max``.
+    to ``max`` for Image API 3 and ``full`` for 1.x/2.x — 3.0 removed ``full``
+    as a *size* value, while ``max`` only arrived in 2.1 and is not understood
+    by earlier servers. (``full`` remains the ordinary *region* value in 3.0.)
 
     Without a service the manifest only offers a plain image URL, which is
     returned unchanged; ``size`` and friends cannot apply in that case.
@@ -61,10 +75,24 @@ def image_url(
 
 
 def _slugify(text: str, *, max_length: int = 80) -> str:
-    """Reduce arbitrary text to something safe to use as a path segment."""
-    cleaned = _UNSAFE.sub("_", unquote(text)).strip("._-")
-    cleaned = re.sub(r"_{2,}", "_", cleaned)
-    return cleaned[:max_length] or "untitled"
+    """Reduce arbitrary text to something safe to use as a path segment.
+
+    Only characters that a file system would reject (or that make a name
+    ambiguous) are replaced. Japanese and other non-ASCII text survives, since
+    most of the material this package is pointed at is labelled in Japanese and
+    ``00001_1丁表.jpg`` is far more useful than ``00001_untitled.jpg``.
+
+    ``..`` and a leading ``.`` are neutralised, so a hostile label cannot climb
+    out of the output directory or produce a hidden file.
+    """
+    cleaned = _UNSAFE.sub("_", unquote(text))
+    cleaned = re.sub(r"_{2,}", "_", cleaned).strip("._-")
+    cleaned = cleaned[:max_length].strip("._-")
+    if not cleaned or set(cleaned) <= {"."}:
+        return "untitled"
+    if cleaned.lower() in _RESERVED:
+        return f"{cleaned}_"
+    return cleaned
 
 
 def manifest_dirname(manifest_id: str, *, label: Optional[str] = None) -> str:
@@ -81,6 +109,12 @@ def manifest_dirname(manifest_id: str, *, label: Optional[str] = None) -> str:
 
     if segments:
         candidate = segments[-1]
+        # Servers that name the file after the item (".../manifest-01.json",
+        # ".../<uuid>.json") would otherwise carry the suffix into the folder.
+        for suffix in (".jsonld", ".json"):
+            if candidate.lower().endswith(suffix) and len(candidate) > len(suffix):
+                candidate = candidate[: -len(suffix)]
+                break
         # Purely generic tails ("iiif", "api") carry no information on their own.
         if candidate.lower() in ("iiif", "api", "v2", "v3", "presentation") and len(segments) > 1:
             candidate = "_".join(segments[-2:])
@@ -113,9 +147,10 @@ def output_filename(
 ) -> str:
     """Name one output file.
 
-    The default is a zero-padded canvas number, which sorts correctly and never
-    collides. ``use_label`` appends the canvas label for human-readable names
-    while keeping the number as the sort key.
+    The default is a zero-padded canvas number, which sorts correctly and is
+    unique within one manifest — callers writing several manifests into one
+    directory must add their own prefix. ``use_label`` appends the canvas label
+    for human-readable names while keeping the number as the sort key.
     """
     stem = str(image.index + 1).zfill(digits)
     if use_label and image.label:
