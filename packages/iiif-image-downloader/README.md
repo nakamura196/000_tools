@@ -71,7 +71,7 @@ report = download(
     ["https://www.dl.ndl.go.jp/api/iiif/3437686/manifest.json"],
     DownloadOptions(output_dir="data", limit=3, sleep=1.0),
 )
-print(report.summary())   # manifests=1 downloaded=3 skipped=0 failed=0
+print(report.summary())  # manifests=1 downloaded=3 skipped=0 failed=0
 
 for manifest_report in report.manifests:
     for result in manifest_report.results:
@@ -84,8 +84,8 @@ for manifest_report in report.manifests:
 from iiif_image_downloader import load_manifest, parse_manifest, image_url
 
 manifest = load_manifest("https://iiif.io/api/cookbook/recipe/0009-book-1/manifest.json")
-print(manifest.presentation_version)   # 3
-print(len(manifest))                   # 5
+print(manifest.presentation_version)  # 3
+print(len(manifest))  # 5
 
 for image in manifest.images[:2]:
     print(image.label, image_url(image, size="400,"))
