@@ -1,0 +1,18 @@
+{
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  "id": "https://example.org/api/iiif/collection/top",
+  "type": "Collection",
+  "label": { "ja": ["サンプルコレクション"] },
+  "items": [
+    {
+      "id": "https://example.org/api/iiif/67890/manifest.json",
+      "type": "Manifest",
+      "label": { "ja": ["源氏物語 サンプル v3"] }
+    },
+    {
+      "id": "https://example.org/api/iiif/12345/manifest.json",
+      "type": "Manifest",
+      "label": { "ja": ["校異源氏物語 サンプル"] }
+    }
+  ]
+}

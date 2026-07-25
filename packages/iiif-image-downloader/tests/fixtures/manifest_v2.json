@@ -1,0 +1,62 @@
+{
+  "@context": "http://iiif.io/api/presentation/2/context.json",
+  "@id": "https://example.org/api/iiif/12345/manifest.json",
+  "@type": "sc:Manifest",
+  "label": "校異源氏物語 サンプル",
+  "sequences": [
+    {
+      "@type": "sc:Sequence",
+      "canvases": [
+        {
+          "@id": "https://example.org/api/iiif/12345/canvas/p1",
+          "@type": "sc:Canvas",
+          "label": "1",
+          "width": 2000,
+          "height": 3000,
+          "images": [
+            {
+              "@type": "oa:Annotation",
+              "motivation": "sc:painting",
+              "resource": {
+                "@id": "https://example.org/iiif/12345_1/full/full/0/default.jpg",
+                "@type": "dctypes:Image",
+                "format": "image/jpeg",
+                "width": 2000,
+                "height": 3000,
+                "service": {
+                  "@context": "http://iiif.io/api/image/2/context.json",
+                  "@id": "https://example.org/iiif/12345_1",
+                  "profile": "http://iiif.io/api/image/2/level2.json"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "@id": "https://example.org/api/iiif/12345/canvas/p2",
+          "@type": "sc:Canvas",
+          "label": [
+            { "@value": "second", "@language": "en" },
+            { "@value": "2丁表", "@language": "ja" }
+          ],
+          "images": [
+            {
+              "@type": "oa:Annotation",
+              "motivation": "sc:painting",
+              "resource": {
+                "@id": "https://example.org/static/12345_2.png",
+                "@type": "dctypes:Image",
+                "format": "image/png"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "https://example.org/api/iiif/12345/canvas/p3",
+          "@type": "sc:Canvas",
+          "label": "3"
+        }
+      ]
+    }
+  ]
+}

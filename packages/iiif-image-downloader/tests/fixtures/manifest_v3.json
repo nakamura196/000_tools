@@ -1,0 +1,101 @@
+{
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  "id": "https://example.org/api/iiif/67890/manifest.json",
+  "type": "Manifest",
+  "label": { "ja": ["源氏物語 サンプル v3"], "en": ["Genji sample v3"] },
+  "items": [
+    {
+      "id": "https://example.org/api/iiif/67890/canvas/p1",
+      "type": "Canvas",
+      "label": { "none": ["1"] },
+      "width": 2000,
+      "height": 3000,
+      "items": [
+        {
+          "id": "https://example.org/api/iiif/67890/page/p1",
+          "type": "AnnotationPage",
+          "items": [
+            {
+              "id": "https://example.org/api/iiif/67890/annotation/p1",
+              "type": "Annotation",
+              "motivation": "painting",
+              "target": "https://example.org/api/iiif/67890/canvas/p1",
+              "body": {
+                "id": "https://example.org/iiif/67890_1/full/max/0/default.jpg",
+                "type": "Image",
+                "format": "image/jpeg",
+                "width": 2000,
+                "height": 3000,
+                "service": [
+                  {
+                    "id": "https://example.org/iiif/67890_1",
+                    "type": "ImageService3",
+                    "profile": "level2"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "https://example.org/api/iiif/67890/canvas/p2",
+      "type": "Canvas",
+      "label": { "ja": ["2丁表"] },
+      "items": [
+        {
+          "type": "AnnotationPage",
+          "items": [
+            {
+              "type": "Annotation",
+              "motivation": "painting",
+              "body": {
+                "type": "Choice",
+                "items": [
+                  {
+                    "id": "https://example.org/static/67890_2.tif",
+                    "type": "Image",
+                    "format": "image/tiff"
+                  },
+                  {
+                    "id": "https://example.org/static/67890_2_alt.jpg",
+                    "type": "Image",
+                    "format": "image/jpeg"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "https://example.org/api/iiif/67890/canvas/p3",
+      "type": "Canvas",
+      "label": { "none": ["3"] },
+      "items": [
+        {
+          "type": "AnnotationPage",
+          "items": [
+            {
+              "type": "Annotation",
+              "motivation": "painting",
+              "body": {
+                "id": "https://example.org/iiif/67890_3/full/full/0/default.jpg",
+                "type": "Image",
+                "service": [
+                  {
+                    "@id": "https://example.org/iiif/67890_3",
+                    "@type": "ImageService2",
+                    "profile": "http://iiif.io/api/image/2/level2.json"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
